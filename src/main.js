@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './style.css'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const sceneOpacityFactor = () => window.innerWidth <= 1024 ? .46 : 1
+const sceneOpacityFactor = () => window.innerWidth <= 1180 ? .46 : 1
 const preloader = document.querySelector('.preloader')
 const sceneState = { activeSection: 'none', homeActive: false, aboutActive: false, servicesActive: false, featureActive: false, languageActive: false, workActive: false, idle: false }
 let sceneInactivityTimer
@@ -51,6 +51,8 @@ function initServicesCarousel() {
   const previous = carousel.querySelector('.service-carousel__arrow--prev')
   const next = carousel.querySelector('.service-carousel__arrow--next')
   if (!track || cards.length < 2) return
+  if (previous) previous.textContent = String.fromCodePoint(0x2190, 0xfe0e)
+  if (next) next.textContent = String.fromCodePoint(0x2192, 0xfe0e)
 
   let activeIndex = 0
   let autoTimer
@@ -732,7 +734,7 @@ function initMobileMenu() {
   closeButton.addEventListener('click', closeMenu)
   backdrop.addEventListener('click', closeMenu)
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMenu() })
-  window.addEventListener('resize', () => { if (window.innerWidth > 1024) closeMenu() })
+  window.addEventListener('resize', () => { if (window.innerWidth > 1180) closeMenu() })
 }
 
 function initLanguageScene() {

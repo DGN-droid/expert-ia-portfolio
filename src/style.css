@@ -258,6 +258,8 @@ main > .claude-scene--page canvas { display:block; height:100%; width:100%; }
   cursor:pointer;
   display:flex;
   font-size:25px;
+  font-family:Arial,"Segoe UI Symbol",sans-serif;
+  font-variant-emoji:text;
   height:52px;
   justify-content:center;
   opacity:0;
@@ -838,7 +840,7 @@ main > .grok-scene--page {
 .mobile-menu-toggle { display:none; }
 .mobile-menu { display:none; }
 
-@media (max-width:1024px) {
+@media (max-width:1180px) {
   .shell { padding-left:18px; padding-right:18px; }
   /* Sur mobile, le contenu reste visible même avant le déclenchement de ScrollTrigger. */
   .reveal { opacity:1 !important; transform:none !important; }
