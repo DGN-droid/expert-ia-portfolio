@@ -1,8 +1,10 @@
 import * as THREE from 'three'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './style.css'
 
-const { gsap, ScrollTrigger } = window
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const sceneOpacityFactor = () => window.innerWidth <= 1024 ? .46 : 1
 const preloader = document.querySelector('.preloader')
 const sceneState = { activeSection: 'none', homeActive: false, aboutActive: false, servicesActive: false, featureActive: false, languageActive: false, workActive: false, idle: false }
 let sceneInactivityTimer
@@ -253,7 +255,7 @@ function initGrokScene() {
     pointer.x += (target.x - pointer.x) * .06
     pointer.y += (target.y - pointer.y) * .06
     const active = sceneState.workActive && !sceneState.idle
-    const targetOpacity = active || (sceneState.idle && !sceneState.languageActive) ? .7 : 0
+    const targetOpacity = active || (sceneState.idle && !sceneState.languageActive) ? .7 * sceneOpacityFactor() : 0
     opacity += (targetOpacity - opacity) * .09
     layer.style.opacity = opacity.toFixed(3)
     layer.style.setProperty('--grok-x', `${pointer.x * 18}px`)
@@ -355,11 +357,278 @@ function initContactForm() {
     const email = String(values.get('email') || '')
     const subject = String(values.get('subject') || '')
     const message = String(values.get('message') || '')
-    const body = `Bonjour Monteiro,\n\nJe m'appelle ${name} (${email}).\n\n${message}`
+    const body = `Bonjour Marie-Christy MONTEIRO,\n\nJe m'appelle ${name} (${email}).\n\n${message}`
     const status = form.querySelector('.contact-form__status')
     if (status) status.textContent = 'Ouverture de votre messagerie…'
     window.location.href = `mailto:hello@naurale.ai?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   })
+}
+
+function initLanguageSwitcher() {
+  const topbar = document.querySelector('.topbar')
+  if (!topbar || topbar.querySelector('.language-switcher')) return
+
+  const switcher = document.createElement('div')
+  switcher.className = 'language-switcher'
+  switcher.setAttribute('aria-label', 'Choisir la langue')
+  switcher.innerHTML = '<button type="button" data-language-choice="fr" aria-label="Français" title="Français">FR</button><button type="button" data-language-choice="en" aria-label="English" title="English">EN</button>'
+  const nav = topbar.querySelector('.nav')
+  if (nav) nav.prepend(switcher)
+  else topbar.append(switcher)
+
+  const text = (selector, values, html = false) => {
+    const elements = [...document.querySelectorAll(selector)]
+    const list = Array.isArray(values) ? values : elements.map(() => values)
+    elements.forEach((element, index) => {
+      const value = list[index]
+      if (value === undefined) return
+      if (html) element.innerHTML = value
+      else element.textContent = value
+    })
+  }
+
+  const translations = {
+    fr: {
+      brand: 'MONTEIRO',
+      nav: ['Accueil', 'Profil', 'Expertise', 'Projets', 'Contact'],
+      logo: 'DATA & IA',
+      talk: 'Échanger <span>↗</span>',
+      preloader: 'Chargement de l’intelligence / 001',
+      heroTitle: 'Données<br /><span>Intelligence</span><br />Impact réel',
+      heroLead: 'Je transforme les données et l’intelligence artificielle en décisions claires, systèmes utiles et expériences qui font avancer les organisations.',
+      heroAction: 'Voir mes projets <span>↗</span>',
+      aboutLabel: 'Mon approche',
+      aboutEyebrow: 'MARIE-CHRISTY MONTEIRO / DATA & IA',
+      aboutTitle: 'Je transforme les données<br /><em>en intelligence utile.</em>',
+      aboutText: [
+        'Je m’appelle Marie-Christy MONTEIRO. Je suis experte en data et en intelligence artificielle. J’aide les organisations à comprendre leurs données, à révéler les opportunités qu’elles contiennent et à construire des solutions réellement utiles.',
+        'Mon approche relie la stratégie, la technologie et l’humain pour transformer les sujets complexes en décisions claires, en systèmes intelligents et en impact durable.',
+      ],
+      aboutLink: 'Découvrir mon expertise <span>↗</span>',
+      dashboardEyebrow: 'DATA & INTELLIGENCE ARTIFICIELLE',
+      dashboardTitle: 'Je transforme les données<br /><em>en décisions claires.</em>',
+      dashboardStatus: 'Systèmes opérationnels',
+      dashboardPanel: ['Évolution des projets', 'Domaines d’expertise'],
+      dashboardSmall: ['12 derniers mois ↗', '04 actifs'],
+      signals: ['Stratégie data', 'IA générative', 'Automatisation', 'Recherche & innovation'],
+      servicesLabel: 'Expertise',
+      servicesEyebrow: 'COMPÉTENCES / 04',
+      servicesTitle: 'Une expertise <em>qui crée de l’impact.</em>',
+      serviceNames: ['Stratégie data', 'Systèmes intelligents', 'IA générative', 'Ateliers & formation'],
+      serviceTexts: [
+        'Identifier les bonnes opportunités et transformer une vision en feuille de route concrète.',
+        'Concevoir des workflows qui permettent aux équipes de travailler mieux et plus vite.',
+        'Mettre l’intelligence générative au service de la création, de l’analyse et de l’innovation.',
+        'Faire monter les équipes en compétence avec des sessions pratiques et accessibles.',
+      ],
+      discover: 'Découvrir <b>↗</b>',
+      languagesEyebrow: 'LANGAGES / DATA & IA',
+      languagesTitle: 'Les langages qui <em>font avancer l’intelligence.</em>',
+      languagesCount: '08 PRINCIPAUX',
+      languageTexts: ['Analyse, modèles & automatisation', 'Données, requêtes & pipelines', 'Statistiques & visualisation', 'Interfaces & IA appliquée', 'Systèmes web fiables', 'Outils, serveurs & déploiement', 'Performance & calcul intensif', 'Calcul scientifique & recherche'],
+      featureLabel: 'Ce que la data rend possible',
+      featureEyebrows: ['ANALYSE INTELLIGENTE', 'WORKFLOWS AUTOMATISÉS'],
+      featureTitles: ['Voir le signal<br /><em>dans le bruit.</em>', 'Libérer du temps<br /><em>pour l’essentiel.</em>'],
+      featureTexts: ['Comprendre ce qui change, pourquoi c’est important et où se trouve réellement l’opportunité.', 'Construire des systèmes qui apprennent de vos équipes et font avancer les tâches importantes.'],
+      featureLink: 'En savoir plus <span>↗</span>',
+      statements: [
+        ['01 / SIGNAL', 'Rendre l’information immédiatement lisible.', 'Je transforme les flux complexes en repères simples : les bons signaux, au bon moment, pour décider avec confiance.', 'ANALYSE · CLARTÉ · DÉCISION'],
+        ['02 / AUTOMATISATION', 'Donner aux équipes plus de temps pour penser.', 'Je conçois des systèmes qui absorbent la répétition, apprennent du terrain et laissent aux équipes l’espace pour créer de la valeur.', 'WORKFLOWS · IA · IMPACT'],
+      ],
+      workLabel: 'Projets sélectionnés',
+      workEyebrow: 'ÉTUDES DE CAS / SÉLECTION',
+      workTitle: 'Des solutions<br /><em>pour le réel.</em>',
+      workNote: 'Une sélection de systèmes, d’expériences et de décisions qui rendent l’avenir plus simple et plus utile.',
+      caseType: 'OPÉRATIONS IA / 2025',
+      caseTitle: 'Donner aux équipes<br />une vision claire.',
+      caseText: 'Transformer un système de connaissance complexe en espace de travail calme et intelligent.',
+      caseLink: 'Voir le projet <span>↗</span>',
+      smallTypes: ['SYSTÈMES GÉNÉRATIFS', 'TRANSMISSION & IA'],
+      smallTitles: ['Donner un langage<br />aux données.', 'Rendre l’inconnu<br />accessible.'],
+      smallLinks: ['Lire le projet ↗', 'Lire le projet ↗'],
+      contactEyebrow: 'Disponible pour de nouvelles collaborations',
+      contactTitle: 'Une idée à explorer ?<br /><em>Construisons la suite.</em>',
+      contactLead: 'Je m’appelle Marie-Christy MONTEIRO. Je suis experte en data et en intelligence artificielle. Écrivez-moi pour transformer une question complexe en direction concrète.',
+      contactBackground: 'Donner du sens<br />à vos données.',
+      chartAxis: ['JAN', 'MAR', 'MAI', 'JUIL', 'SEP', 'AUJ'],
+      miniHeadline: 'Vos données,<br /><strong>plus lisibles.</strong>',
+      flowNodes: ['Entrée', 'IA', 'Résultat'],
+      orb: 'IA',
+      carouselPrevious: 'Compétence précédente', carouselNext: 'Compétence suivante',
+      form: { name: 'Nom', email: 'E-mail', subject: 'Sujet', message: 'Message', namePlaceholder: 'Votre nom', emailPlaceholder: 'vous@entreprise.com', subjectPlaceholder: 'Parlons de votre projet', messagePlaceholder: 'Décrivez votre besoin en quelques lignes…', button: 'Envoyer le message <span>↗</span>' },
+      footer: ['MARIE-CHRISTY MONTEIRO © 2026', 'Data · IA · Impact', 'Retour en haut ↑'],
+      mobileMenu: 'MONTEIRO / MENU', mobileClose: 'Fermer le menu', mobileLanguage: 'LANGUE', mobileTheme: 'THÈME',
+    },
+    en: {
+      brand: 'MONTEIRO',
+      nav: ['Home', 'Profile', 'Expertise', 'Projects', 'Contact'],
+      logo: 'DATA & AI',
+      talk: 'Let’s talk <span>↗</span>',
+      preloader: 'Loading intelligence / 001',
+      heroTitle: 'Data<br /><span>Intelligence</span><br />Real impact',
+      heroLead: 'I turn data and artificial intelligence into clear decisions, useful systems and experiences that move organizations forward.',
+      heroAction: 'View my projects <span>↗</span>',
+      aboutLabel: 'My approach',
+      aboutEyebrow: 'MARIE-CHRISTY MONTEIRO / DATA & AI',
+      aboutTitle: 'I turn data<br /><em>into useful intelligence.</em>',
+      aboutText: [
+        'My name is Marie-Christy MONTEIRO. I am a data and artificial intelligence expert. I help organizations understand their data, reveal the opportunities within it and build solutions that are genuinely useful.',
+        'My approach connects strategy, technology and people to turn complex subjects into clear decisions, intelligent systems and lasting impact.',
+      ],
+      aboutLink: 'Discover my expertise <span>↗</span>',
+      dashboardEyebrow: 'DATA & ARTIFICIAL INTELLIGENCE',
+      dashboardTitle: 'I turn data<br /><em>into clear decisions.</em>',
+      dashboardStatus: 'Systems online',
+      dashboardPanel: ['Project momentum', 'Areas of expertise'],
+      dashboardSmall: ['Last 12 months ↗', '04 active'],
+      signals: ['Data strategy', 'Generative AI', 'Automation', 'Research & innovation'],
+      servicesLabel: 'Expertise',
+      servicesEyebrow: 'CAPABILITIES / 04',
+      servicesTitle: 'Expertise <em>that creates impact.</em>',
+      serviceNames: ['Data strategy', 'Intelligent systems', 'Generative AI', 'Workshops & training'],
+      serviceTexts: ['Identify the right opportunities and turn a vision into a concrete roadmap.', 'Design workflows that help teams work better and faster.', 'Put generative intelligence to work for creation, analysis and innovation.', 'Help teams build confidence with practical, accessible sessions.'],
+      discover: 'Discover <b>↗</b>',
+      languagesEyebrow: 'LANGUAGES / DATA & AI',
+      languagesTitle: 'The languages that <em>move intelligence forward.</em>',
+      languagesCount: '08 CORE',
+      languageTexts: ['Analysis, models & automation', 'Data, queries & pipelines', 'Statistics & visualization', 'Interfaces & applied AI', 'Reliable web systems', 'Tools, servers & deployment', 'Performance & intensive computing', 'Scientific computing & research'],
+      featureLabel: 'What data makes possible',
+      featureEyebrows: ['INTELLIGENT ANALYSIS', 'AUTOMATED WORKFLOWS'],
+      featureTitles: ['See the signal<br /><em>in the noise.</em>', 'Free up time<br /><em>for what matters.</em>'],
+      featureTexts: ['Understand what changes, why it matters and where the real opportunity lies.', 'Build systems that learn from your teams and move important work forward.'],
+      featureLink: 'Learn more <span>↗</span>',
+      statements: [
+        ['01 / SIGNAL', 'Make information immediately legible.', 'I turn complex flows into simple reference points: the right signals, at the right time, for confident decisions.', 'ANALYSIS · CLARITY · DECISION'],
+        ['02 / AUTOMATION', 'Give teams more time to think.', 'I design systems that absorb repetition, learn from the field and give teams room to create value.', 'WORKFLOWS · AI · IMPACT'],
+      ],
+      workLabel: 'Selected projects',
+      workEyebrow: 'CASE STUDIES / SELECTION',
+      workTitle: 'Solutions<br /><em>for the real world.</em>',
+      workNote: 'A selection of systems, experiences and decisions that make the future simpler and more useful.',
+      caseType: 'AI OPERATIONS / 2025',
+      caseTitle: 'Give teams<br />a clear view.',
+      caseText: 'Turn a complex knowledge system into a calm, intelligent workspace.',
+      caseLink: 'View project <span>↗</span>',
+      smallTypes: ['GENERATIVE SYSTEMS', 'TRANSMISSION & AI'],
+      smallTitles: ['Give data a language.', 'Make the unknown accessible.'],
+      smallLinks: ['Read project ↗', 'Read project ↗'],
+      contactEyebrow: 'Available for new collaborations',
+      contactTitle: 'An idea to explore?<br /><em>Let’s build what’s next.</em>',
+      contactLead: 'My name is Marie-Christy MONTEIRO. I am a data and artificial intelligence expert. Write to me to turn a complex question into a clear direction.',
+      contactBackground: 'Give your data<br />meaning.',
+      chartAxis: ['JAN', 'MAR', 'MAY', 'JUL', 'SEP', 'NOW'],
+      miniHeadline: 'Your data,<br /><strong>more legible.</strong>',
+      flowNodes: ['Input', 'AI', 'Output'],
+      orb: 'AI',
+      carouselPrevious: 'Previous capability', carouselNext: 'Next capability',
+      form: { name: 'Name', email: 'Email', subject: 'Subject', message: 'Message', namePlaceholder: 'Your name', emailPlaceholder: 'you@company.com', subjectPlaceholder: 'Let’s talk about your project', messagePlaceholder: 'Describe what you need in a few lines…', button: 'Send message <span>↗</span>' },
+      footer: ['MARIE-CHRISTY MONTEIRO © 2026', 'Data · AI · Impact', 'Back to top ↑'],
+      mobileMenu: 'MONTEIRO / MENU', mobileClose: 'Close menu', mobileLanguage: 'LANGUAGE', mobileTheme: 'THEME',
+    },
+  }
+
+  const applyLanguage = (language) => {
+    const selected = language === 'en' ? 'en' : 'fr'
+    const t = translations[selected]
+    window.__nauraleLanguage = selected
+    document.documentElement.lang = selected
+    window.localStorage.setItem('naurale-language', selected)
+    switcher.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.languageChoice === selected)))
+    const logoBrand = document.querySelector('.logo strong')
+    const preloaderBrand = document.querySelector('.preloader__brand')
+    if (logoBrand) logoBrand.textContent = t.brand
+    if (preloaderBrand) preloaderBrand.innerHTML = `<span></span>${t.brand}`
+    text('.logo small', t.logo)
+    text('.nav__link', t.nav)
+    text('.topbar > a.button--small', t.talk, true)
+    text('.preloader small', t.preloader)
+    text('.hero__title', t.heroTitle, true)
+    text('.hero__lead', t.heroLead)
+    text('.hero__actions .button', t.heroAction, true)
+    text('#about .section-label p', t.aboutLabel)
+    text('.speech-block .eyebrow', t.aboutEyebrow)
+    text('.speech-block h2', t.aboutTitle, true)
+    text('.speech-block__text', t.aboutText)
+    text('.speech-block .quiet-link', t.aboutLink, true)
+    text('.dashboard__header .eyebrow', t.dashboardEyebrow)
+    text('.dashboard__header h2', t.dashboardTitle, true)
+    const statusPill = document.querySelector('.status-pill')
+    if (statusPill) statusPill.innerHTML = `<i></i>${t.dashboardStatus}`
+    text('.panel__top > span', t.dashboardPanel)
+    text('.panel__top small', t.dashboardSmall)
+    text('.signal-list li > span', t.signals)
+    text('#services > .section-label p', t.servicesLabel)
+    text('.services__intro .eyebrow', t.servicesEyebrow)
+    text('.services__intro h2', t.servicesTitle, true)
+    text('.service-card h3', t.serviceNames)
+    text('.service-card p', t.serviceTexts)
+    text('.service-card a', t.discover, true)
+    text('.language-section__heading .eyebrow', t.languagesEyebrow)
+    text('.language-section__heading h3', t.languagesTitle, true)
+    text('.language-section__count', t.languagesCount)
+    text('.language-card p', t.languageTexts)
+    text('.feature-story > .section-label p', t.featureLabel)
+    text('.feature-row__copy .eyebrow', t.featureEyebrows)
+    text('.feature-row__copy h2', t.featureTitles, true)
+    text('.feature-row__copy > p:not(.eyebrow)', t.featureTexts)
+    text('.feature-row__copy .quiet-link', [t.featureLink, t.featureLink], true)
+    document.querySelectorAll('.feature-row__statement').forEach((statement, index) => {
+      const values = t.statements[index]
+      if (!values) return
+      const statementParts = [statement.querySelector(':scope > span'), statement.querySelector('h3'), statement.querySelector('p'), statement.querySelector(':scope > small')]
+      statementParts.forEach((part, partIndex) => { if (part) part.textContent = values[partIndex] })
+    })
+    text('#work > .section-label p', t.workLabel)
+    text('.work__intro .eyebrow', t.workEyebrow)
+    text('.work__intro h2', t.workTitle, true)
+    text('.work__note', t.workNote)
+    text('.case-study__type', t.caseType)
+    text('.case-study--featured .case-study__copy h3', t.caseTitle, true)
+    text('.case-study--featured .case-study__copy p', t.caseText)
+    text('.case-study--featured .quiet-link', t.caseLink, true)
+    text('.case-study__small-copy > span', t.smallTypes)
+    text('.case-study__small-copy h3', t.smallTitles, true)
+    text('.case-study__small-copy a', t.smallLinks)
+    const contactEyebrow = document.querySelector('#contact .eyebrow')
+    if (contactEyebrow) contactEyebrow.innerHTML = `<span class="eyebrow__dot"></span>${t.contactEyebrow}`
+    text('#contact h2', t.contactTitle, true)
+    text('.contact__lead', t.contactLead)
+    const form = document.querySelector('.contact-form')
+    if (form) {
+      text('label span', [t.form.name, t.form.email, t.form.subject, t.form.message])
+      const placeholders = [t.form.namePlaceholder, t.form.emailPlaceholder, t.form.subjectPlaceholder, t.form.messagePlaceholder]
+      form.querySelectorAll('input, textarea').forEach((field, index) => { field.placeholder = placeholders[index] || '' })
+      text('.contact-form button', t.form.button, true)
+      const status = form.querySelector('.contact-form__status')
+      if (status) status.textContent = ''
+    }
+    text('.footer span', t.footer.slice(0, 2))
+    text('.footer a', t.footer[2])
+    text('.contact__background', t.contactBackground, true)
+    text('.chart__axis span', t.chartAxis)
+    text('.mini-screen__headline', t.miniHeadline, true)
+    text('.feature-art__node--one', t.flowNodes[0])
+    text('.feature-art__node--two', t.flowNodes[1])
+    text('.feature-art__node--three', t.flowNodes[2])
+    text('.contact__orb span', t.orb)
+    text('.mini-nav > span', t.brand)
+    const previousArrow = document.querySelector('.service-carousel__arrow--prev')
+    const nextArrow = document.querySelector('.service-carousel__arrow--next')
+    if (previousArrow) previousArrow.setAttribute('aria-label', t.carouselPrevious)
+    if (nextArrow) nextArrow.setAttribute('aria-label', t.carouselNext)
+    const mobileTop = document.querySelector('.mobile-menu__top span')
+    const mobileClose = document.querySelector('.mobile-menu__close')
+    const mobileLanguage = document.querySelector('.mobile-menu__language > span')
+    const mobileTheme = document.querySelector('.mobile-menu__theme > span')
+    if (mobileTop) mobileTop.textContent = t.mobileMenu
+    if (mobileClose) mobileClose.setAttribute('aria-label', t.mobileClose)
+    if (mobileLanguage) mobileLanguage.textContent = t.mobileLanguage
+    if (mobileTheme) mobileTheme.textContent = t.mobileTheme
+    window.dispatchEvent(new CustomEvent('language:changed', { detail: { language: selected } }))
+  }
+
+  switcher.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => applyLanguage(button.dataset.languageChoice)))
+  applyLanguage(window.localStorage.getItem('naurale-language') || 'fr')
 }
 
 function initThemeSwitcher() {
@@ -411,6 +680,14 @@ function initMobileMenu() {
   menu.innerHTML = '<div class="mobile-menu__backdrop"></div><div class="mobile-menu__panel"><div class="mobile-menu__top"><span>NAURALE / MENU</span><button class="mobile-menu__close" type="button" aria-label="Fermer le menu">×</button></div><nav class="mobile-menu__nav" aria-label="Navigation mobile"></nav><div class="mobile-menu__theme"><span>THÈME</span></div></div>'
   const mobileNav = menu.querySelector('.mobile-menu__nav')
   const mobileTheme = menu.querySelector('.mobile-menu__theme')
+  const mobileSettings = document.createElement('div')
+  mobileSettings.className = 'mobile-menu__settings'
+  const mobileLanguage = document.createElement('div')
+  mobileLanguage.className = 'mobile-menu__language'
+  mobileLanguage.innerHTML = '<span>LANGUE</span>'
+  const mobileThemeParent = mobileTheme.parentElement
+  mobileThemeParent?.append(mobileSettings)
+  mobileSettings.append(mobileLanguage, mobileTheme)
   let closeMenu = () => {}
   nav.querySelectorAll('.nav__link').forEach((link) => {
     const clone = link.cloneNode(true)
@@ -422,7 +699,20 @@ function initMobileMenu() {
     clone.addEventListener('click', () => button.click())
     mobileTheme.append(clone)
   })
+  document.querySelectorAll('.language-switcher button').forEach((button) => {
+    const clone = button.cloneNode(true)
+    clone.addEventListener('click', () => button.click())
+    mobileLanguage.append(clone)
+  })
+  const syncMobileTheme = () => mobileTheme.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.themeChoice === document.documentElement.dataset.theme)))
+  const syncMobileLanguage = () => mobileLanguage.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.languageChoice === document.documentElement.lang)))
+  syncMobileTheme()
+  syncMobileLanguage()
+  window.addEventListener('theme:changed', syncMobileTheme)
+  window.addEventListener('language:changed', syncMobileLanguage)
   document.body.append(menu)
+  const mobileBrand = menu.querySelector('.mobile-menu__top span')
+  if (mobileBrand) mobileBrand.textContent = 'MONTEIRO / MENU'
 
   const closeButton = menu.querySelector('.mobile-menu__close')
   const backdrop = menu.querySelector('.mobile-menu__backdrop')
@@ -442,7 +732,7 @@ function initMobileMenu() {
   closeButton.addEventListener('click', closeMenu)
   backdrop.addEventListener('click', closeMenu)
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMenu() })
-  window.addEventListener('resize', () => { if (window.innerWidth > 850) closeMenu() })
+  window.addEventListener('resize', () => { if (window.innerWidth > 1024) closeMenu() })
 }
 
 function initLanguageScene() {
@@ -954,7 +1244,7 @@ function initGeminiScene() {
     icon.position.y = Math.sin(seconds * 1.2) * .06
     material.uniforms.uTime.value = seconds
     glowMaterial.opacity = .82 + Math.sin(seconds * 1.5) * .1
-    const targetOpacity = sceneState.aboutActive || (sceneState.idle && !sceneState.languageActive) ? .72 : 0
+    const targetOpacity = sceneState.aboutActive || (sceneState.idle && !sceneState.languageActive) ? .72 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
     renderer.render(scene, camera)
@@ -1060,7 +1350,7 @@ function initChatGPTScene() {
     group.position.x += burstOffset.x
     group.position.y += burstOffset.y
     glowMaterial.opacity = .46 + Math.sin(seconds * 1.2) * .05
-    const targetOpacity = sceneState.servicesActive || (sceneState.idle && !sceneState.languageActive) ? .82 : 0
+    const targetOpacity = sceneState.servicesActive || (sceneState.idle && !sceneState.languageActive) ? .82 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
     renderer.render(scene, camera)
@@ -1156,7 +1446,7 @@ function initClaudeScene() {
     group.position.x += burstOffset.x
     group.position.y += burstOffset.y
     glowMaterial.opacity = .78 + Math.sin(seconds * 1.3) * .1
-    const targetOpacity = sceneState.featureActive || (sceneState.idle && !sceneState.languageActive) ? .78 : 0
+    const targetOpacity = sceneState.featureActive || (sceneState.idle && !sceneState.languageActive) ? .78 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
     renderer.render(scene, camera)
@@ -1175,21 +1465,20 @@ const start = () => {
   gsap.utils.toArray('.reveal').forEach((element) => gsap.from(element, { y: 24, opacity: 0, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 88%', once: true } }))
   gsap.to('.hero__visual', { y: 38, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } })
   gsap.to('.contact__orb', { y: -20, duration: 2.8, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-  gsap.to('.feature-art__ring', { rotation: 360, duration: 24, repeat: -1, ease: 'none' })
-  gsap.to('.feature-art__card', { y: -8, duration: 2, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-  gsap.to('.feature-art__node--two', { scale: 1.12, duration: 1.6, repeat: -1, yoyo: true, ease: 'sine.inOut' })
   gsap.utils.toArray('section[id]').forEach((section) => ScrollTrigger.create({ trigger: section, start: 'top 45%', end: 'bottom 45%', onToggle: ({ isActive }) => { if (!isActive) return; document.querySelectorAll('.nav__link').forEach((item) => item.classList.remove('is-active')); document.querySelector(`.nav__link[href="#${section.id}"]`)?.classList.add('is-active') } }))
 }
 
 window.addEventListener('load', start, { once: true })
 initThemeSwitcher()
+replaceFeatureCards()
+initContactForm()
+initLanguageSwitcher()
+initMobileMenu()
 initHeroScene()
 initGeminiScene()
 initChatGPTScene()
 initClaudeScene()
-replaceFeatureCards()
 initGrokScene()
-initContactForm()
 initServicesCarousel()
 initLanguageScene()
 initLanguageInteractions()
