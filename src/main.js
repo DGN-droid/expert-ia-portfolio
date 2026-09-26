@@ -10,6 +10,18 @@ const sceneState = { activeSection: 'none', homeActive: false, aboutActive: fals
 let sceneInactivityTimer
 const sceneIdleDelay = 12000
 
+const normalizeTextArrows = (root = document.body) => {
+  if (!root) return
+  const arrowCodes = { '←': 0x2190, '→': 0x2192, '↗': 0x2197, '↑': 0x2191, '↓': 0x2193, '↘': 0x2198, '↙': 0x2199 }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes = []
+  let node
+  while ((node = walker.nextNode())) nodes.push(node)
+  nodes.forEach((textNode) => {
+    textNode.nodeValue = textNode.nodeValue.replace(/[←→↗↑↓↘↙](?!\uFE0E)/g, (arrow) => String.fromCodePoint(arrowCodes[arrow], 0xfe0e))
+  })
+}
+
 const resetSceneInactivity = () => {
   sceneState.idle = false
   window.clearTimeout(sceneInactivityTimer)
@@ -626,6 +638,7 @@ function initLanguageSwitcher() {
     if (mobileClose) mobileClose.setAttribute('aria-label', t.mobileClose)
     if (mobileLanguage) mobileLanguage.textContent = t.mobileLanguage
     if (mobileTheme) mobileTheme.textContent = t.mobileTheme
+    normalizeTextArrows()
     window.dispatchEvent(new CustomEvent('language:changed', { detail: { language: selected } }))
   }
 
