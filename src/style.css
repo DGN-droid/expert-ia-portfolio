@@ -604,6 +604,8 @@ main > .grok-scene--page {
 .nav__link::before {
   color:var(--orange);
   content:'\25C7';
+  font-family:Arial,"Segoe UI Symbol",sans-serif;
+  font-variant-emoji:text;
   font-size:11px;
   line-height:1;
   opacity:.72;
@@ -614,7 +616,7 @@ main > .grok-scene--page {
 .nav__link:nth-child(2)::before { content:'\25C9'; }
 .nav__link:nth-child(3)::before { content:'\2726'; }
 .nav__link:nth-child(4)::before { content:'\25C8'; }
-.nav__link:nth-child(5)::before { content:'\2197'; }
+.nav__link:nth-child(5)::before { content:'\2197\FE0E'; }
 .nav__link:hover,.nav__link.is-active { transform:translateY(-2px); }
 .nav__link:hover::before,.nav__link.is-active::before { opacity:1; transform:scale(1) rotate(0); }
 
@@ -874,6 +876,39 @@ main > .grok-scene--page {
 .mobile-menu { display:none; }
 
 @media (max-width:1180px) {
+  /* Le viewport mobile doit être la largeur de référence de chaque bloc. */
+  *,
+  *::before,
+  *::after { box-sizing:border-box; }
+  html,
+  body,
+  #app,
+  main,
+  main > section,
+  .shell,
+  .section-frame {
+    margin-left:0;
+    margin-right:0;
+    min-width:0;
+    max-width:100vw;
+    width:100vw;
+  }
+  .contact__content,
+  .contact-form,
+  .service-carousel,
+  .service-cards,
+  .language-section,
+  .language-grid,
+  .feature-row,
+  .case-study--featured,
+  .case-study__row,
+  .plan-grid {
+    max-width:none;
+    width:100%;
+  }
+  .shell { margin-left:0; margin-right:0; }
+  .contact-form__row { width:100%; }
+
   .shell { padding-left:18px; padding-right:18px; }
   /* Sur mobile, le contenu reste visible même avant le déclenchement de ScrollTrigger. */
   .reveal { backface-visibility:hidden; }
