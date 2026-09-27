@@ -4,6 +4,29 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './style.css'
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const compactViewport = window.matchMedia('(max-width: 768px)')
+const pixelRatio = () => Math.min(window.devicePixelRatio || 1, compactViewport.matches ? 1.25 : 1.75)
+// Keep the five WebGL canvases within a sensible GPU budget on phones.
+const sceneFrame = (render) => {
+  if (reduceMotion) return
+  if (document.hidden) {
+    const resume = () => {
+      document.removeEventListener('visibilitychange', resume)
+      requestAnimationFrame(render)
+    }
+    document.addEventListener('visibilitychange', resume)
+    return
+  }
+  requestAnimationFrame((time) => {
+    const interval = compactViewport.matches ? 1000 / 30 : 1000 / 60
+    const last = sceneFrame.last.get(render) || 0
+    if (time - last >= interval - 2) {
+      sceneFrame.last.set(render, time)
+      render(time)
+    } else sceneFrame(render)
+  })
+}
+sceneFrame.last = new WeakMap()
 const sceneOpacityFactor = () => window.innerWidth <= 1180 ? .46 : 1
 const preloader = document.querySelector('.preloader')
 const sceneState = { activeSection: 'none', homeActive: false, aboutActive: false, servicesActive: false, featureActive: false, languageActive: false, workActive: false, idle: false }
@@ -70,6 +93,7 @@ function initServicesCarousel() {
   let autoTimer
   let resumeTimer
   let pointerStartX = null
+  const canAutoPlay = () => !reduceMotion && !document.hidden && carousel.getBoundingClientRect().bottom > 0 && carousel.getBoundingClientRect().top < innerHeight && !carousel.matches(':hover, :focus-within')
 
   const render = () => {
     const step = Math.min(300, Math.max(170, carousel.clientWidth * .36))
@@ -81,22 +105,26 @@ function initServicesCarousel() {
       const distance = Math.abs(offset)
       const scale = offset === 0 ? 1 : Math.max(.68, 1 - distance * .13)
       const opacity = offset === 0 ? 1 : Math.max(.12, 1 - distance * .38)
-      const blur = offset === 0 ? 0 : Math.min(10, distance * 5)
+      const blur = compactViewport.matches ? 0 : offset === 0 ? 0 : Math.min(5, distance * 2.5)
       card.style.transform = `translate(-50%, -50%) translateX(${offset * step}px) scale(${scale})`
       card.style.opacity = opacity
       card.style.filter = `blur(${blur}px)`
       card.style.zIndex = String(10 - distance)
       card.style.pointerEvents = offset === 0 ? 'auto' : 'none'
       card.setAttribute('aria-hidden', offset === 0 ? 'false' : 'true')
+      card.querySelectorAll('a').forEach((link) => { link.tabIndex = offset === 0 ? 0 : -1 })
     })
+    carousel.setAttribute('aria-label', `Expertise ${activeIndex + 1} sur ${cards.length}`)
   }
 
   const startAuto = () => {
     window.clearInterval(autoTimer)
     autoTimer = window.setInterval(() => {
-      activeIndex = (activeIndex + 1) % cards.length
-      render()
-    }, 3600)
+      if (canAutoPlay()) {
+        activeIndex = (activeIndex + 1) % cards.length
+        render()
+      }
+    }, 5200)
   }
 
   const resumeAuto = () => {
@@ -122,13 +150,15 @@ function initServicesCarousel() {
     else resumeAuto()
   })
   carousel.addEventListener('pointercancel', () => { pointerStartX = null; resumeAuto() })
+  carousel.addEventListener('pointerleave', resumeAuto)
+  carousel.addEventListener('focusout', resumeAuto)
   carousel.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowLeft') move(-1)
     if (event.key === 'ArrowRight') move(1)
   })
   window.addEventListener('resize', render)
   render()
-  startAuto()
+  if (!reduceMotion) startAuto()
 }
 
 function initLanguageInteractions() {
@@ -766,7 +796,7 @@ function initLanguageScene() {
     julia: { label: 'Jl', color: 0x9558b2, accent: 0xe5baff, lightAccent: 0x70428e, text: '#ffffff' },
   }
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setPixelRatio(pixelRatio())
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.1
@@ -787,11 +817,12 @@ function initLanguageScene() {
 
   const disposeRoot = () => {
     while (root.children.length) {
-      const child = root.children.pop()
+      const child = root.children[0]
+      root.remove(child)
       child.traverse((node) => {
         node.geometry?.dispose()
         if (Array.isArray(node.material)) node.material.forEach((material) => material.dispose())
-        else node.material?.dispose()
+        else { node.material?.map?.dispose(); node.material?.dispose() }
       })
     }
   }
@@ -903,8 +934,8 @@ function initLanguageScene() {
     root.position.y += burstOffset.y
     layerOpacity += ((activeKey ? .82 : 0) - layerOpacity) * .035
     layer.style.opacity = layerOpacity.toFixed(3)
-    renderer.render(scene, camera)
-    if (!reduceMotion) requestAnimationFrame(render)
+    if (activeKey && sceneState.languageActive) renderer.render(scene, camera)
+    sceneFrame(render)
   }
   window.addEventListener('language:selected', (event) => buildScene(event.detail.key))
   window.addEventListener('theme:changed', () => { if (activeKey) buildScene(activeKey) })
@@ -1070,7 +1101,7 @@ function initHeroScene() {
   if (!canvas) return
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setPixelRatio(pixelRatio())
   renderer.outputColorSpace = THREE.SRGBColorSpace
   const scene = new THREE.Scene()
   const camera = new THREE.PerspectiveCamera(34, 1, .1, 100)
@@ -1160,8 +1191,8 @@ function initHeroScene() {
     signal.position.x += burstOffset.x
     signal.position.y += burstOffset.y
     particles.rotation.y -= .0012
-    renderer.render(scene, camera)
-    if (!reduceMotion) requestAnimationFrame(render)
+    if (sceneState.homeActive) renderer.render(scene, camera)
+    sceneFrame(render)
   }
   window.addEventListener('resize', resize)
   window.addEventListener('pointermove', (event) => { target.x = (event.clientX / window.innerWidth - .5) * 2; target.y = (event.clientY / window.innerHeight - .5) * -2 })
@@ -1175,7 +1206,7 @@ function initGeminiScene() {
   const layer = canvas.parentElement
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(pixelRatio())
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.15
@@ -1262,8 +1293,8 @@ function initGeminiScene() {
     const targetOpacity = sceneState.aboutActive || (sceneState.idle && !sceneState.languageActive) ? .72 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
-    renderer.render(scene, camera)
-    if (!reduceMotion) requestAnimationFrame(render)
+    if (layerOpacity > .005) renderer.render(scene, camera)
+    sceneFrame(render)
   }
   window.addEventListener('resize', resize)
   window.addEventListener('pointermove', (event) => { target.x = (event.clientX / window.innerWidth - .5) * 2; target.y = (event.clientY / window.innerHeight - .5) * -2 })
@@ -1277,7 +1308,7 @@ function initChatGPTScene() {
   const layer = canvas.parentElement
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setPixelRatio(pixelRatio())
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.1
@@ -1368,8 +1399,8 @@ function initChatGPTScene() {
     const targetOpacity = sceneState.servicesActive || (sceneState.idle && !sceneState.languageActive) ? .82 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
-    renderer.render(scene, camera)
-    if (!reduceMotion) requestAnimationFrame(render)
+    if (layerOpacity > .005) renderer.render(scene, camera)
+    sceneFrame(render)
   }
   window.addEventListener('resize', resize)
   window.addEventListener('pointermove', (event) => { target.x = (event.clientX / window.innerWidth - .5) * 2; target.y = (event.clientY / window.innerHeight - .5) * -2 })
@@ -1383,7 +1414,7 @@ function initClaudeScene() {
   const layer = canvas.parentElement
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8))
+  renderer.setPixelRatio(pixelRatio())
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.15
@@ -1464,8 +1495,8 @@ function initClaudeScene() {
     const targetOpacity = sceneState.featureActive || (sceneState.idle && !sceneState.languageActive) ? .78 * sceneOpacityFactor() : 0
     layerOpacity += (targetOpacity - layerOpacity) * .09
     layer.style.opacity = layerOpacity.toFixed(3)
-    renderer.render(scene, camera)
-    if (!reduceMotion) requestAnimationFrame(render)
+    if (layerOpacity > .005) renderer.render(scene, camera)
+    sceneFrame(render)
   }
   window.addEventListener('resize', resize)
   window.addEventListener('pointermove', (event) => { target.x = (event.clientX / window.innerWidth - .5) * 2; target.y = (event.clientY / window.innerHeight - .5) * -2 })
@@ -1476,7 +1507,13 @@ function initClaudeScene() {
 const start = () => {
   if (!gsap || reduceMotion) { preloader?.remove(); document.body.classList.add('is-ready'); return }
   gsap.registerPlugin(ScrollTrigger)
-  gsap.timeline({ defaults: { ease: 'power4.out' } }).to('.preloader__line i', { scaleX: 1, duration: 1.2, ease: 'power2.inOut' }).to('.preloader__brand', { y: -18, opacity: 0, duration: .45 }, '-=.15').to('.preloader', { clipPath: 'inset(0 0 100% 0)', duration: .9, ease: 'power4.inOut' }).from('.topbar', { y: -18, opacity: 0, duration: .55 }, '-=.35').from('.hero__content > *, .hero__visual', { y: 24, opacity: 0, duration: .75, stagger: .08 }, '-=.25').add(() => { preloader?.remove(); document.body.classList.add('is-ready') })
+  const intro = gsap.timeline({ defaults: { ease: 'power4.out' } })
+    .to('.preloader__line i', { scaleX: 1, duration: .8, ease: 'power2.inOut' })
+    .to('.preloader__brand', { y: -12, opacity: 0, duration: .35 }, '-=.1')
+    .to('.preloader', { clipPath: 'inset(0 0 100% 0)', duration: .65, ease: 'power4.inOut' })
+  if (window.innerWidth > 1180) intro.from('.topbar', { y: -18, opacity: 0, duration: .5 }, '-=.3')
+  intro.from('.hero__content > *, .hero__visual', { y: 24, opacity: 0, duration: .7, stagger: .08 }, '-=.2')
+    .add(() => { preloader?.remove(); document.body.classList.add('is-ready') })
   gsap.utils.toArray('.reveal').forEach((element) => gsap.from(element, { y: 24, opacity: 0, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: element, start: 'top 88%', once: true } }))
   gsap.to('.hero__visual', { y: 38, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } })
   gsap.to('.contact__orb', { y: -20, duration: 2.8, repeat: -1, yoyo: true, ease: 'sine.inOut' })
@@ -1484,18 +1521,18 @@ const start = () => {
 }
 
 window.addEventListener('load', start, { once: true })
+// A missing WebGL context must never leave the page behind the loader.
+window.setTimeout(() => { preloader?.remove(); document.body.classList.add('is-ready') }, 3500)
 initThemeSwitcher()
 replaceFeatureCards()
 initContactForm()
 initLanguageSwitcher()
 initMobileMenu()
-initHeroScene()
-initGeminiScene()
-initChatGPTScene()
-initClaudeScene()
-initGrokScene()
+for (const init of [initHeroScene, initGeminiScene, initChatGPTScene, initClaudeScene, initGrokScene]) {
+  try { init() } catch (error) { console.warn('Scène 3D indisponible', error) }
+}
 initServicesCarousel()
-initLanguageScene()
+try { initLanguageScene() } catch (error) { console.warn('Scène 3D indisponible', error) }
 initLanguageInteractions()
 document.querySelectorAll('.nav__link').forEach((link) => link.addEventListener('click', () => { document.querySelectorAll('.nav__link').forEach((item) => item.classList.remove('is-active')); link.classList.add('is-active') }))
 if (window.matchMedia('(pointer: fine)').matches && !reduceMotion && gsap) document.querySelectorAll('.magnetic').forEach((element) => { element.addEventListener('mousemove', (event) => { const bounds = element.getBoundingClientRect(); gsap.to(element, { x: (event.clientX - bounds.left - bounds.width / 2) * .12, y: (event.clientY - bounds.top - bounds.height / 2) * .12, duration: .3, ease: 'power3.out' }) }); element.addEventListener('mouseleave', () => gsap.to(element, { x: 0, y: 0, duration: .45, ease: 'elastic.out(1,.35)' })) })

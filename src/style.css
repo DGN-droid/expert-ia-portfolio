@@ -854,7 +854,7 @@ main > .grok-scene--page {
 @media (max-width:1180px) {
   .shell { padding-left:18px; padding-right:18px; }
   /* Sur mobile, le contenu reste visible même avant le déclenchement de ScrollTrigger. */
-  .reveal { opacity:1 !important; transform:none !important; }
+  .reveal { backface-visibility:hidden; }
   .topbar { grid-template-columns:1fr auto; height:76px; }
   .nav { display:none; }
   .topbar > a.button--small { display:none; }
@@ -981,4 +981,110 @@ main > .grok-scene--page {
   main > .chatgpt-scene--page,
   main > .claude-scene--page { height:56vh; top:23vh; }
   main > .grok-scene--page { height:56vh; top:23vh; width:38vw; }
+}
+
+/* Final motion and responsive pass */
+html { scroll-behavior:smooth; scroll-padding-top:80px; }
+body { overflow-x:clip; }
+button, a { -webkit-tap-highlight-color:transparent; }
+:where(a,button,input,textarea,[role="button"]):focus-visible { outline:2px solid var(--orange); outline-offset:4px; }
+.hero__content, .speech-block, .feature-row__copy, .contact__content { isolation:isolate; }
+.hero__lead, .speech-block__text, .contact__lead { text-wrap:pretty; }
+.hero__title, .section-frame h2, .feature-row__copy h2 { text-wrap:balance; }
+.button, .quiet-link, .service-card, .language-card, .plan, .case-study { transition-timing-function:cubic-bezier(.22,1,.36,1); }
+.button:hover { box-shadow:0 14px 38px rgba(255,100,28,.2); }
+#services .service-card { transition:transform .72s cubic-bezier(.22,1,.36,1), opacity .55s ease, filter .55s ease, border-color .35s ease, background .35s ease; }
+#services .service-card[aria-hidden="true"] { user-select:none; }
+.service-carousel:focus-within .service-carousel__arrow { opacity:1; pointer-events:auto; }
+.language-card:focus-visible { border-color:var(--orange); }
+.mobile-menu { transition:opacity .35s ease,visibility .35s ease; }
+.mobile-menu__panel { padding-bottom:max(30px,env(safe-area-inset-bottom)); }
+
+@media (max-width:1180px) {
+  .hero { min-height:min(820px,100svh); }
+  .hero__visual { top:280px; }
+  .contact__content { margin-left:0; }
+  .service-carousel__arrow { opacity:1; pointer-events:auto; }
+  .service-carousel__arrow--prev { left:0; }
+  .service-carousel__arrow--next { right:0; }
+}
+@media (max-width:600px) {
+  .shell { padding-left:clamp(18px,5vw,28px); padding-right:clamp(18px,5vw,28px); }
+  .topbar { height:72px; }
+  .hero { min-height:760px; min-height:max(710px,100svh); padding-top:130px; }
+  .hero__content { max-width:100%; }
+  .hero__title { font-size:clamp(43px,12vw,62px); letter-spacing:-.085em; line-height:.99; }
+  .hero__lead { font-size:15px; line-height:1.6; max-width:31ch; margin-top:26px; }
+  .hero__visual { height:420px; left:-36%; top:340px; width:172%; opacity:.55; }
+  .hero__actions { margin-top:25px; }
+  .dashboard, .services, .feature-story, .work, .plans { padding-top:78px; padding-bottom:82px; }
+  .section-label { align-items:center; gap:16px; }
+  .section-label p { font-size:17px; }
+  .speech-block { min-height:0; margin:48px 0 80px; }
+  .speech-block h2, .dashboard h2, .services h2, .work h2, .plans h2 { font-size:clamp(38px,10vw,48px); line-height:1.03; }
+  .speech-block__text { font-size:15px; line-height:1.75; }
+  #services .services__intro h2 { font-size:clamp(37px,10vw,50px); line-height:1.02; }
+  #services .service-carousel { height:415px; margin-top:28px; }
+  #services .service-cards { height:365px; }
+  #services .service-card { height:335px; width:min(310px,calc(100% - 68px)); padding:24px; }
+  .service-carousel__arrow { height:42px; width:42px; top:46%; font-size:22px; }
+  .service-carousel__arrow--prev { left:-9px; }
+  .service-carousel__arrow--next { right:-9px; }
+  #services .language-section { margin-top:30px; min-height:0; }
+  #services .language-section__heading h3 { font-size:clamp(32px,8.5vw,43px); line-height:1.05; }
+  .language-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .language-card { min-height:118px; align-items:flex-start; flex-direction:column; padding:14px; gap:12px; border-radius:19px; }
+  .language-icon { flex:0 0 40px; height:40px; width:40px; border-radius:12px; }
+  .language-card h4 { font-size:17px; margin:0 0 4px; }
+  .language-card p { font-size:12px; }
+  .feature-row { margin-top:45px; gap:26px; }
+  .feature-row__copy h2 { font-size:clamp(38px,10vw,48px); }
+  .feature-row__statement { max-width:100%; }
+  .work__intro { margin-top:45px; margin-bottom:30px; }
+  .case-study__copy { padding:28px 24px; }
+  .case-study__copy h3 { font-size:clamp(36px,9vw,44px); }
+  .case-study__screen { min-height:275px; }
+  .case-study--small { grid-template-columns:1fr; }
+  .case-study__small-copy { padding:8px 4px 18px; }
+  .plan-grid { gap:12px; }
+  .plan { min-height:230px; }
+  .contact { min-height:680px; padding-top:105px; padding-bottom:130px; }
+  .contact__content { margin-top:20px; }
+  .contact h2 { font-size:clamp(40px,10.5vw,53px); line-height:1.02; }
+  .contact__lead { max-width:31ch; line-height:1.65; }
+  .contact__orb { height:170px; width:170px; right:-45px; top:auto; bottom:15px; opacity:.48; pointer-events:none; }
+  .contact__orb::before { height:135px; width:95px; }
+  .contact__orb span { font-size:32px; }
+  main > .gemini-scene--page,main > .chatgpt-scene--page,main > .claude-scene--page { opacity:.42; }
+  .footer { gap:13px; line-height:1.5; }
+}
+@media (max-width:360px) {
+  .hero__title { font-size:42px; }
+  #services .service-card { width:calc(100% - 54px); }
+  .language-card { padding:11px; }
+  .language-card p { font-size:11px; }
+}
+@media (max-width:1180px) {
+  .topbar {
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    max-width:none;
+    transform:none;
+    opacity:1;
+    z-index:40;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    padding-top:env(safe-area-inset-top);
+    height:calc(72px + env(safe-area-inset-top));
+  }
+  .topbar .logo { position:relative; z-index:1; }
+  .mobile-menu-toggle { top:calc(15px + env(safe-area-inset-top)); z-index:41; }
+  .mobile-menu { z-index:50; }
+  .mobile-menu__panel { padding-top:max(26px,env(safe-area-inset-top)); }
+}
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  .service-carousel__arrow { opacity:1; pointer-events:auto; }
 }
