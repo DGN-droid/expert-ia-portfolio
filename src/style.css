@@ -937,7 +937,7 @@ main > .grok-scene--page {
     z-index:8;
   }
   .mobile-menu-toggle i { background:var(--text); display:block; height:2px; transition:transform .3s,opacity .3s; width:17px; }
-  .theme-switcher { display:none; }
+  .theme-switcher { display:flex; right:70px; }
   .language-switcher { display:none; }
   .mobile-menu-toggle[aria-expanded="true"] i:nth-child(1) { transform:translateY(6px) rotate(45deg); }
   .mobile-menu-toggle[aria-expanded="true"] i:nth-child(2) { opacity:0; }
