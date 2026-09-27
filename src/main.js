@@ -172,6 +172,25 @@ function initLanguageInteractions() {
     card.setAttribute('tabindex', '0')
     let isAnimating = false
 
+    const resetIconTilt = () => {
+      card.classList.remove('is-pointer-active')
+      icon.style.setProperty('--icon-tilt-x', '0deg')
+      icon.style.setProperty('--icon-tilt-y', '0deg')
+      icon.style.setProperty('--icon-lift', '0px')
+    }
+    card.addEventListener('pointermove', (event) => {
+      if (event.pointerType === 'touch' || isAnimating) return
+      const bounds = card.getBoundingClientRect()
+      const x = ((event.clientX - bounds.left) / bounds.width - .5) * 2
+      const y = ((event.clientY - bounds.top) / bounds.height - .5) * 2
+      card.classList.add('is-pointer-active')
+      icon.style.setProperty('--icon-tilt-x', `${-y * 12}deg`)
+      icon.style.setProperty('--icon-tilt-y', `${x * 14}deg`)
+      icon.style.setProperty('--icon-lift', `${-Math.max(0, 1 - Math.abs(y)) * 3}px`)
+    })
+    card.addEventListener('pointerleave', resetIconTilt)
+    card.addEventListener('pointercancel', resetIconTilt)
+
     const activate = () => {
       if (isAnimating) return
       isAnimating = true
@@ -189,6 +208,7 @@ function initLanguageInteractions() {
       window.dispatchEvent(new CustomEvent('language:selected', { detail: { key: languageKey } }))
       icon.classList.add('is-animating')
       icon.classList.remove('is-3d')
+      resetIconTilt()
       icon.style.opacity = '0'
       for (let index = 0; index < particleCount; index += 1) {
         const source = {
@@ -965,6 +985,7 @@ function createBurstController({
   let dispersedPositions
   let startedAt = 0
   let cleanupTimer
+  let activeParticleOpacity = particleOpacity
   const originalScale = group.scale.clone()
   const scatterDuration = 700
   const reformDelay = 180
@@ -1022,9 +1043,13 @@ function createBurstController({
       dispersedPositions[index + 1] = positions[index + 1] + (Math.random() - .5) * spread
       dispersedPositions[index + 2] = positions[index + 2] + (Math.random() - .5) * spread
     }
+    const lightTheme = document.documentElement.classList.contains('is-light-theme')
+    const particleColor = lightTheme ? new THREE.Color(color).lerp(new THREE.Color(0x18212b), .36) : color
+    const particleSizeForTheme = lightTheme ? particleSize * 1.45 : particleSize
+    activeParticleOpacity = lightTheme ? Math.min(1, particleOpacity + .18) : particleOpacity
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute('position', new THREE.BufferAttribute(sourcePositions.slice(), 3))
-    const material = new THREE.PointsMaterial({ color, size: particleSize, transparent: true, opacity: particleOpacity, blending, depthWrite: false })
+    const material = new THREE.PointsMaterial({ color: particleColor, size: particleSizeForTheme, transparent: true, opacity: activeParticleOpacity, blending, depthWrite: false })
     particles = new THREE.Points(geometry, material)
     particles.userData.isLanguageBurstParticle = true
     scene.add(particles)
@@ -1066,8 +1091,8 @@ function createBurstController({
       group.scale.copy(originalScale).multiplyScalar(.08 + easedReveal * .92)
     }
     particles.material.opacity = revealProgress > 0
-      ? Math.max(0, particleOpacity * (1 - easedReveal))
-      : elapsed < scatterDuration ? particleOpacity - easedScatter * particleOpacity * .4 : particleOpacity * (.58 + easedReform * .42)
+      ? Math.max(0, activeParticleOpacity * (1 - easedReveal))
+      : elapsed < scatterDuration ? activeParticleOpacity - easedScatter * activeParticleOpacity * .4 : activeParticleOpacity * (.58 + easedReform * .42)
     if (elapsed >= scatterDuration + reformDelay + reformDuration) {
       finish()
     }
