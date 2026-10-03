@@ -198,14 +198,14 @@ function initLanguageInteractions() {
       const bounds = icon.getBoundingClientRect()
       const style = getComputedStyle(icon)
       const particleBackground = style.backgroundImage !== 'none' ? style.backgroundImage : style.backgroundColor
-      const languageKey = card.querySelector('h4')?.textContent.trim().toLowerCase().replace('javascript', 'javascript').replace('typescript', 'typescript').replace('c++', 'cpp')
+      const languageKey = card.dataset.languageKey || card.querySelector('h4')?.textContent.trim().toLowerCase().replace('javascript', 'javascript').replace('typescript', 'typescript').replace('c++', 'cpp')
       const particles = []
       const sourcePositions = []
       const destinations = []
       const particleCount = 24
 
       cards.forEach((otherCard) => otherCard.querySelector('.language-icon')?.classList.remove('is-3d'))
-      window.dispatchEvent(new CustomEvent('language:selected', { detail: { key: languageKey } }))
+      window.dispatchEvent(new CustomEvent('language:selected', { detail: { key: languageKey, burst: true } }))
       icon.classList.add('is-animating')
       icon.classList.remove('is-3d')
       resetIconTilt()
@@ -428,6 +428,80 @@ function initContactForm() {
   })
 }
 
+function extendLanguageCards() {
+  const grid = document.querySelector('.language-grid')
+  if (!grid || grid.dataset.extended === 'true') return
+
+  const groups = [
+    {
+      label: 'Langages',
+      cards: [
+        ['java', 'Java', 'Java', 'Applications robustes & systèmes', '#ed8b00'],
+        ['c', 'C', 'C', 'Performance & systèmes bas niveau', '#5c6bc0'],
+        ['html5', 'HTML', 'HTML5', 'Structure des interfaces web', '#e34f26'],
+        ['css3', 'CSS', 'CSS3', 'Design responsive & accessible', '#1572b6'],
+        ['php', 'PHP', 'PHP', 'Applications web côté serveur', '#777bb4'],
+      ],
+    },
+    {
+      label: 'Données & IA',
+      cards: [
+        ['pandas', 'Pd', 'Pandas', 'Manipulation & analyse de données', '#150458'],
+        ['numpy', 'Np', 'NumPy', 'Calcul scientifique & tableaux', '#4dabcf'],
+        ['scikit-learn', 'ML', 'scikit-learn', 'Modèles prédictifs & machine learning', '#f7931e'],
+      ],
+    },
+    {
+      label: 'Backend & Frameworks',
+      cards: [
+        ['fastapi', 'API', 'FastAPI', 'APIs Python rapides', '#159b88'],
+        ['flask', 'Fl', 'Flask', 'Microservices & APIs web', '#3b3b3b'],
+        ['nodejs', 'NJ', 'Node.js', 'Backend JavaScript', '#68a063'],
+        ['express', 'Ex', 'Express', 'APIs & services web', '#444444'],
+        ['react', 'Re', 'React', 'Interfaces web composables', '#61dafb'],
+        ['streamlit', 'St', 'Streamlit', 'Applications data interactives', '#ff4b4b'],
+        ['javafx', 'FX', 'JavaFX', 'Interfaces desktop Java', '#5382a1'],
+      ],
+    },
+    {
+      label: 'Bases de données',
+      cards: [
+        ['mysql', 'My', 'MySQL', 'Bases relationnelles', '#00758f'],
+        ['mongodb', 'Mg', 'MongoDB', 'Données documentaires', '#47a248'],
+        ['hibernate', 'Hb', 'Hibernate', 'Persistance Java & ORM', '#59666c'],
+      ],
+    },
+    {
+      label: 'DevOps & Outils',
+      cards: [
+        ['docker', 'Dk', 'Docker', 'Conteneurs & déploiement', '#2496ed'],
+        ['git', 'Git', 'Git', 'Versioning & collaboration', '#f05032'],
+        ['maven', 'Mv', 'Maven', 'Build & dépendances Java', '#c71a36'],
+        ['linux', 'Lx', 'Linux', 'Systèmes & administration', '#333333'],
+        ['elasticsearch', 'Es', 'Elasticsearch', 'Recherche & observabilité', '#00bfb3'],
+        ['kibana', 'Kb', 'Kibana', 'Dashboards & exploration', '#f04e98'],
+        ['aws', 'AWS', 'AWS', 'Cloud & infrastructure', '#ff9900'],
+      ],
+    },
+  ]
+
+  groups.forEach(({ label, cards }) => {
+    const heading = document.createElement('div')
+    heading.className = 'language-group-label'
+    heading.textContent = label
+    grid.append(heading)
+    cards.forEach(([key, mark, name, description, color]) => {
+      const card = document.createElement('article')
+      card.className = 'language-card'
+      card.dataset.languageKey = key
+      card.dataset.sceneColor = color
+      card.innerHTML = `<span class="language-icon language-icon--tool" style="--tool-color:${color}">${mark}</span><div><h4>${name}</h4><p>${description}</p></div>`
+      grid.append(card)
+    })
+  })
+  grid.dataset.extended = 'true'
+}
+
 function initLanguageSwitcher() {
   const topbar = document.querySelector('.topbar')
   if (!topbar || topbar.querySelector('.language-switcher')) return
@@ -488,8 +562,8 @@ function initLanguageSwitcher() {
       discover: 'Découvrir <b>↗</b>',
       languagesEyebrow: 'LANGAGES / DATA & IA',
       languagesTitle: 'Les langages qui <em>font avancer l’intelligence.</em>',
-      languagesCount: '08 PRINCIPAUX',
-      languageTexts: ['Analyse, modèles & automatisation', 'Données, requêtes & pipelines', 'Statistiques & visualisation', 'Interfaces & IA appliquée', 'Systèmes web fiables', 'Outils, serveurs & déploiement', 'Performance & calcul intensif', 'Calcul scientifique & recherche'],
+      languagesCount: '33 TECHNOLOGIES',
+      languageTexts: ['Analyse, modèles & automatisation', 'Données, requêtes & pipelines', 'Statistiques & visualisation', 'Interfaces & IA appliquée', 'Systèmes web fiables', 'Outils, serveurs & déploiement', 'Performance & calcul intensif', 'Calcul scientifique & recherche', 'Applications robustes & systèmes', 'Performance & systèmes bas niveau', 'Structure des interfaces web', 'Design responsive & accessible', 'Applications web côté serveur', 'Manipulation & analyse de données', 'Calcul scientifique & tableaux', 'Modèles prédictifs & machine learning', 'APIs Python rapides', 'Microservices & APIs web', 'Backend JavaScript', 'APIs & services web', 'Interfaces web composables', 'Applications data interactives', 'Interfaces desktop Java', 'Bases relationnelles', 'Données documentaires', 'Persistance Java & ORM', 'Conteneurs & déploiement', 'Versioning & collaboration', 'Build & dépendances Java', 'Systèmes & administration', 'Recherche & observabilité', 'Dashboards & exploration', 'Cloud & infrastructure'],
       featureLabel: 'Ce que la data rend possible',
       featureEyebrows: ['ANALYSE INTELLIGENTE', 'WORKFLOWS AUTOMATISÉS'],
       featureTitles: ['Voir le signal<br /><em>dans le bruit.</em>', 'Libérer du temps<br /><em>pour l’essentiel.</em>'],
@@ -500,9 +574,10 @@ function initLanguageSwitcher() {
         ['02 / AUTOMATISATION', 'Donner aux équipes plus de temps pour penser.', 'Je conçois des systèmes qui absorbent la répétition, apprennent du terrain et laissent aux équipes l’espace pour créer de la valeur.', 'WORKFLOWS · IA · IMPACT'],
       ],
       workLabel: 'Projets sélectionnés',
-      workEyebrow: 'ÉTUDES DE CAS / SÉLECTION',
-      workTitle: 'Des solutions<br /><em>pour le réel.</em>',
-      workNote: 'Une sélection de systèmes, d’expériences et de décisions qui rendent l’avenir plus simple et plus utile.',
+      workEyebrow: 'GITHUB / PROJETS SÉLECTIONNÉS',
+      workTitle: 'Des projets<br /><em>qui prennent forme.</em>',
+      workNote: 'Une sélection de projets data, IA, cybersécurité et développement logiciel.',
+      workGithub: 'Voir mon GitHub <span>↗</span>',
       caseType: 'OPÉRATIONS IA / 2025',
       caseTitle: 'Donner aux équipes<br />une vision claire.',
       caseText: 'Transformer un système de connaissance complexe en espace de travail calme et intelligent.',
@@ -554,8 +629,8 @@ function initLanguageSwitcher() {
       discover: 'Discover <b>↗</b>',
       languagesEyebrow: 'LANGUAGES / DATA & AI',
       languagesTitle: 'The languages that <em>move intelligence forward.</em>',
-      languagesCount: '08 CORE',
-      languageTexts: ['Analysis, models & automation', 'Data, queries & pipelines', 'Statistics & visualization', 'Interfaces & applied AI', 'Reliable web systems', 'Tools, servers & deployment', 'Performance & intensive computing', 'Scientific computing & research'],
+      languagesCount: '33 TECHNOLOGIES',
+      languageTexts: ['Analysis, models & automation', 'Data, queries & pipelines', 'Statistics & visualization', 'Interfaces & applied AI', 'Reliable web systems', 'Tools, servers & deployment', 'Performance & intensive computing', 'Scientific computing & research', 'Robust applications & systems', 'Performance & low-level systems', 'Web interface structure', 'Responsive & accessible design', 'Server-side web applications', 'Data manipulation & analysis', 'Scientific computing & arrays', 'Predictive models & machine learning', 'Fast Python APIs', 'Microservices & web APIs', 'JavaScript backend', 'APIs & web services', 'Composable web interfaces', 'Interactive data applications', 'Java desktop interfaces', 'Relational databases', 'Document databases', 'Java persistence & ORM', 'Containers & deployment', 'Versioning & collaboration', 'Java builds & dependencies', 'Systems & administration', 'Search & observability', 'Dashboards & exploration', 'Cloud & infrastructure'],
       featureLabel: 'What data makes possible',
       featureEyebrows: ['INTELLIGENT ANALYSIS', 'AUTOMATED WORKFLOWS'],
       featureTitles: ['See the signal<br /><em>in the noise.</em>', 'Free up time<br /><em>for what matters.</em>'],
@@ -566,9 +641,10 @@ function initLanguageSwitcher() {
         ['02 / AUTOMATION', 'Give teams more time to think.', 'I design systems that absorb repetition, learn from the field and give teams room to create value.', 'WORKFLOWS · AI · IMPACT'],
       ],
       workLabel: 'Selected projects',
-      workEyebrow: 'CASE STUDIES / SELECTION',
-      workTitle: 'Solutions<br /><em>for the real world.</em>',
-      workNote: 'A selection of systems, experiences and decisions that make the future simpler and more useful.',
+      workEyebrow: 'GITHUB / SELECTED PROJECTS',
+      workTitle: 'Projects<br /><em>made concrete.</em>',
+      workNote: 'A selection of data, AI, cybersecurity and software development projects.',
+      workGithub: 'View my GitHub <span>↗</span>',
       caseType: 'AI OPERATIONS / 2025',
       caseTitle: 'Give teams<br />a clear view.',
       caseText: 'Turn a complex knowledge system into a calm, intelligent workspace.',
@@ -645,7 +721,8 @@ function initLanguageSwitcher() {
     text('#work > .section-label p', t.workLabel)
     text('.work__intro .eyebrow', t.workEyebrow)
     text('.work__intro h2', t.workTitle, true)
-    text('.work__note', t.workNote)
+    text('.work__note > p', t.workNote)
+    text('.work__github-link', t.workGithub, true)
     text('.case-study__type', t.caseType)
     text('.case-study--featured .case-study__copy h3', t.caseTitle, true)
     text('.case-study--featured .case-study__copy p', t.caseText)
@@ -871,8 +948,15 @@ function initLanguageScene() {
     return shape
   }
 
-  const buildScene = (key) => {
-    const item = data[key]
+  const buildScene = (key, shouldBurst = false) => {
+    const sourceCard = [...document.querySelectorAll('.language-card')].find((card) => card.dataset.languageKey === key)
+    const item = data[key] || {
+      label: sourceCard?.querySelector('.language-icon')?.textContent.trim() || key.toUpperCase(),
+      color: Number.parseInt(sourceCard?.dataset.sceneColor?.replace('#', '') || 'ff641c', 16),
+      accent: 0xffb27d,
+      lightAccent: 0xc04c18,
+      text: '#ffffff',
+    }
     if (!item) return
     languageBurst?.destroy()
     languageBurst = null
@@ -913,7 +997,7 @@ function initLanguageScene() {
     innerRing.rotation.y = .8
     group.add(innerRing)
 
-    group.scale.setScalar(.95)
+    group.scale.setScalar(.58)
     root.add(group)
     activeKey = key
     const lightTheme = document.documentElement.classList.contains('is-light-theme')
@@ -931,6 +1015,7 @@ function initLanguageScene() {
       particleOpacity: lightTheme ? .96 : .68,
       isVisible: () => activeKey === key && sceneState.languageActive,
     })
+    if (shouldBurst) window.requestAnimationFrame(() => languageBurst?.trigger(true))
   }
 
   const resize = () => {
@@ -957,7 +1042,7 @@ function initLanguageScene() {
     if (activeKey && sceneState.languageActive) renderer.render(scene, camera)
     sceneFrame(render)
   }
-  window.addEventListener('language:selected', (event) => buildScene(event.detail.key))
+  window.addEventListener('language:selected', (event) => buildScene(event.detail.key, event.detail.burst === true))
   window.addEventListener('theme:changed', () => { if (activeKey) buildScene(activeKey) })
   window.addEventListener('pointermove', (event) => { target.x = (event.clientX / window.innerWidth - .5) * 2; target.y = (event.clientY / window.innerHeight - .5) * -2 })
   window.addEventListener('resize', resize)
@@ -1008,8 +1093,8 @@ function createBurstController({
     state.offset = { x: state.destination?.x || 0, y: state.destination?.y || 0, z: 0 }
   }
 
-  const trigger = () => {
-    if (state.active || !isVisible()) return
+  const trigger = (force = false) => {
+    if (state.active || (!force && !isVisible())) return
     group.updateMatrixWorld(true)
     const positions = []
     group.traverse((child) => {
@@ -1117,7 +1202,7 @@ function createBurstController({
     trigger()
   }, true)
 
-  return { update, destroy }
+  return { update, destroy, trigger }
 }
 resetSceneInactivity()
 
@@ -1551,6 +1636,7 @@ window.setTimeout(() => { preloader?.remove(); document.body.classList.add('is-r
 initThemeSwitcher()
 replaceFeatureCards()
 initContactForm()
+extendLanguageCards()
 initLanguageSwitcher()
 initMobileMenu()
 for (const init of [initHeroScene, initGeminiScene, initChatGPTScene, initClaudeScene, initGrokScene]) {

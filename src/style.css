@@ -393,6 +393,10 @@ main > .claude-scene--page canvas { display:block; height:100%; width:100%; }
 }
 .language-card h4 { font-size:17px; letter-spacing:-.04em; margin:0 0 6px; }
 .language-card p { color:#81888b; font-size:11px; line-height:1.35; margin:0; }
+.language-group-label { color:#777d80; font:10px var(--mono); grid-column:1 / -1; letter-spacing:.12em; margin:28px 0 2px; text-transform:uppercase; }
+.language-icon--tool { background:var(--tool-color); color:#fff; font-size:11px; letter-spacing:-.05em; }
+.language-icon--tool[style*="#61dafb"] { color:#123044; }
+.language-icon--tool[style*="#ff9900"] { color:#241500; }
 
 @media (max-width:850px) {
   .language-grid { grid-template-columns:repeat(2,1fr); }
@@ -1028,6 +1032,95 @@ main > .grok-scene--page {
   main > .chatgpt-scene--page,
   main > .claude-scene--page { height:64vh; top:18vh; }
   main > .grok-scene--page { height:64vh; top:18vh; width:36vw; }
+}
+
+/* Section 04 : projets reliés directement aux dépôts GitHub. */
+.project-grid {
+  display:grid;
+  gap:14px;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin-left:33%;
+  position:relative;
+  z-index:1;
+}
+.project-card {
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  border:1px solid var(--border);
+  border-radius:24px;
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  min-height:300px;
+  padding:24px;
+  position:relative;
+  transition:background .3s,border-color .3s,transform .3s,box-shadow .3s;
+}
+.project-card:hover {
+  background:linear-gradient(145deg,rgba(255,100,28,.13),rgba(255,255,255,.035));
+  border-color:rgba(255,100,28,.65);
+  box-shadow:0 18px 45px rgba(0,0,0,.16);
+  transform:translateY(-5px);
+}
+.project-card__top {
+  align-items:center;
+  color:#737a7e;
+  display:flex;
+  font:9px var(--mono);
+  justify-content:space-between;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.project-card__top span:first-child { color:var(--orange); font-size:14px; font-weight:800; }
+.project-card__icon { font-size:32px; line-height:1; margin:28px 0 18px; }
+.project-card h3 { font-size:25px; letter-spacing:-.07em; line-height:1.02; margin:0 35px 14px 0; }
+.project-card p { color:#92999c; font-size:13px; line-height:1.55; margin:0 0 22px; max-width:38ch; }
+.project-card__stack { border-top:1px solid var(--border); color:#777f83; font:10px/1.5 var(--mono); margin-top:auto; padding-top:15px; padding-right:24px; }
+.project-card__arrow { color:var(--orange); font-size:20px; font-weight:400; position:absolute; right:24px; top:23px; }
+.work__note > p { margin:0 0 22px; }
+.work__note .quiet-link { font-size:10px; }
+.is-light-theme .project-card { background:rgba(255,255,255,.72); border-color:rgba(24,33,43,.14); color:#15191c; }
+.is-light-theme .project-card:hover { background:#fff; border-color:rgba(237,91,27,.55); box-shadow:0 18px 45px rgba(41,48,56,.12); }
+.is-light-theme .project-card p { color:#626a6e; }
+.is-light-theme .project-card__stack { border-color:rgba(24,33,43,.12); color:#697176; }
+
+/* Repères projets sans emojis, avec interaction au survol. */
+.project-card__icon {
+  align-items:center;
+  background:linear-gradient(145deg,rgba(255,100,28,.18),rgba(255,255,255,.06));
+  border:1px solid rgba(255,120,52,.42);
+  border-radius:15px;
+  box-shadow:inset 0 0 18px rgba(255,100,28,.08);
+  display:flex;
+  font-size:0;
+  height:54px;
+  justify-content:center;
+  margin:26px 0 18px;
+  position:relative;
+  transition:background .3s,border-color .3s,box-shadow .3s,transform .3s;
+  width:54px;
+}
+.project-card__icon::before {
+  color:var(--orange-2);
+  content:'SEC';
+  font:800 11px var(--mono);
+  letter-spacing:.08em;
+}
+.project-card:nth-child(2) .project-card__icon::before { color:#9fc8ff; content:'LLM'; }
+.project-card:nth-child(3) .project-card__icon::before { color:#89d4bb; content:'PI'; }
+.project-card:nth-child(4) .project-card__icon::before { color:#ffd343; content:'JVM'; }
+.project-card:nth-child(5) .project-card__icon::before { color:#aab8ff; content:'API'; }
+.project-card:nth-child(6) .project-card__icon::before { color:#f08f72; content:'OPS'; }
+.project-card__icon::after { border:1px solid currentColor; border-radius:10px; content:''; inset:8px; opacity:.22; position:absolute; }
+.project-card:hover .project-card__icon { background:linear-gradient(145deg,rgba(255,100,28,.32),rgba(255,255,255,.1)); border-color:var(--orange); box-shadow:0 0 26px rgba(255,100,28,.2),inset 0 0 18px rgba(255,100,28,.12); transform:translateY(-4px) rotate(-4deg); }
+.is-light-theme .project-card__icon { background:linear-gradient(145deg,rgba(255,100,28,.12),rgba(255,255,255,.9)); border-color:rgba(237,91,27,.36); }
+
+@media (max-width:850px) {
+  .project-grid { margin-left:0; }
+}
+@media (max-width:600px) {
+  .project-grid { grid-template-columns:1fr; }
+  .project-card { min-height:260px; padding:22px; }
+  .project-card h3 { font-size:23px; }
 }
 
 @media (max-width:600px) {
