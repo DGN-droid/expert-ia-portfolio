@@ -387,7 +387,8 @@ function initGrokScene() {
     window.requestAnimationFrame(animate)
   })
   window.addEventListener('pointerdown', (event) => {
-    if (!image || event.button !== 0 || bursting || opacity < .1) return
+    const primaryPointer = event.pointerType === 'touch' || event.button === 0
+    if (!image || !primaryPointer || bursting || opacity < .1) return
     const bounds = image.getBoundingClientRect()
     const inside = event.clientX >= bounds.left && event.clientX <= bounds.right && event.clientY >= bounds.top && event.clientY <= bounds.bottom
     if (!inside) return
@@ -1071,7 +1072,10 @@ function createBurstController({
   let startedAt = 0
   let cleanupTimer
   let activeParticleOpacity = particleOpacity
+  let transformSnapshots = []
   const originalScale = group.scale.clone()
+  const raycaster = new THREE.Raycaster()
+  const raycastPointer = new THREE.Vector2()
   const scatterDuration = 700
   const reformDelay = 180
   const reformDuration = 2400
@@ -1081,6 +1085,12 @@ function createBurstController({
   const finish = () => {
     if (cleanupTimer) window.clearTimeout(cleanupTimer)
     cleanupTimer = undefined
+    transformSnapshots.forEach(({ object, position, quaternion, scale }) => {
+      object.position.copy(position)
+      object.quaternion.copy(quaternion)
+      object.scale.copy(scale)
+    })
+    transformSnapshots = []
     state.active = false
     group.visible = true
     group.scale.copy(originalScale)
@@ -1090,12 +1100,21 @@ function createBurstController({
       particles.material.dispose()
       particles = undefined
     }
-    state.offset = { x: state.destination?.x || 0, y: state.destination?.y || 0, z: 0 }
+    state.offset = { x: 0, y: 0, z: 0 }
   }
 
   const trigger = (force = false) => {
     if (state.active || (!force && !isVisible())) return
     group.updateMatrixWorld(true)
+    transformSnapshots = []
+    group.traverse((object) => {
+      transformSnapshots.push({
+        object,
+        position: object.position.clone(),
+        quaternion: object.quaternion.clone(),
+        scale: object.scale.clone(),
+      })
+    })
     const positions = []
     group.traverse((child) => {
       if (!child.isMesh || !child.geometry?.attributes?.position) return
@@ -1119,9 +1138,6 @@ function createBurstController({
 
     sourcePositions = new Float32Array(positions)
     dispersedPositions = new Float32Array(positions.length)
-    const direction = Math.random() * Math.PI * 2
-    const distance = 1.1 + Math.random() * .45
-    state.destination = { x: Math.cos(direction) * distance, y: Math.sin(direction) * .7, z: 0 }
     for (let index = 0; index < positions.length; index += 3) {
       const spread = scatterMin + Math.random() * Math.max(0, scatterMax - scatterMin)
       dispersedPositions[index] = positions[index] + (Math.random() - .5) * spread
@@ -1141,23 +1157,27 @@ function createBurstController({
     group.visible = false
     state.active = true
     startedAt = performance.now()
-    cleanupTimer = window.setTimeout(finish, scatterDuration + reformDelay + reformDuration + 120)
+    cleanupTimer = window.setTimeout(finish, scatterDuration + reformDelay + reformDuration + revealDuration + 120)
   }
 
   const update = () => {
     if (!state.active || !particles) return state.offset
+    transformSnapshots.forEach(({ object, position, quaternion, scale }) => {
+      object.position.copy(position)
+      object.quaternion.copy(quaternion)
+      object.scale.copy(scale)
+    })
     const elapsed = performance.now() - startedAt
     const attribute = particles.geometry.attributes.position
     const reformProgress = Math.max(0, Math.min(1, (elapsed - scatterDuration - reformDelay) / reformDuration))
     const scatterProgress = Math.max(0, Math.min(1, elapsed / scatterDuration))
     const easedScatter = scatterProgress * scatterProgress * (3 - 2 * scatterProgress)
     const easedReform = reformProgress * reformProgress * (3 - 2 * reformProgress)
-    const revealProgress = Math.max(0, Math.min(1, (elapsed - (scatterDuration + reformDelay + reformDuration - revealDuration)) / revealDuration))
+    const reformEnd = scatterDuration + reformDelay + reformDuration
+    const revealProgress = Math.max(0, Math.min(1, (elapsed - (reformEnd - 120)) / revealDuration))
     const easedReveal = revealProgress * revealProgress * (3 - 2 * revealProgress)
-    const offsetX = reformProgress * state.destination.x
-    const offsetY = reformProgress * state.destination.y
-    state.offset.x = offsetX
-    state.offset.y = offsetY
+    state.offset.x = 0
+    state.offset.y = 0
     for (let index = 0; index < attribute.count; index += 1) {
       const base = index * 3
       if (elapsed < scatterDuration) {
@@ -1165,20 +1185,20 @@ function createBurstController({
         attribute.array[base + 1] = sourcePositions[base + 1] + (dispersedPositions[base + 1] - sourcePositions[base + 1]) * easedScatter
         attribute.array[base + 2] = sourcePositions[base + 2] + (dispersedPositions[base + 2] - sourcePositions[base + 2]) * easedScatter
       } else {
-        attribute.array[base] = dispersedPositions[base] + (sourcePositions[base] + offsetX - dispersedPositions[base]) * easedReform
-        attribute.array[base + 1] = dispersedPositions[base + 1] + (sourcePositions[base + 1] + offsetY - dispersedPositions[base + 1]) * easedReform
+        attribute.array[base] = dispersedPositions[base] + (sourcePositions[base] - dispersedPositions[base]) * easedReform
+        attribute.array[base + 1] = dispersedPositions[base + 1] + (sourcePositions[base + 1] - dispersedPositions[base + 1]) * easedReform
         attribute.array[base + 2] = dispersedPositions[base + 2] + (sourcePositions[base + 2] - dispersedPositions[base + 2]) * easedReform
       }
     }
     attribute.needsUpdate = true
     if (revealProgress > 0) {
       group.visible = true
-      group.scale.copy(originalScale).multiplyScalar(.08 + easedReveal * .92)
+      group.scale.copy(originalScale).multiplyScalar(.72 + easedReveal * .28)
     }
     particles.material.opacity = revealProgress > 0
       ? Math.max(0, activeParticleOpacity * (1 - easedReveal))
       : elapsed < scatterDuration ? activeParticleOpacity - easedScatter * activeParticleOpacity * .4 : activeParticleOpacity * (.58 + easedReform * .42)
-    if (elapsed >= scatterDuration + reformDelay + reformDuration) {
+    if (elapsed >= reformEnd + revealDuration) {
       finish()
     }
     return state.offset
@@ -1190,15 +1210,19 @@ function createBurstController({
   }
 
   window.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0 || !isVisible()) return
+    const primaryPointer = event.pointerType === 'touch' || event.button === 0
+    if (!primaryPointer || !isVisible()) return
     const bounds = canvas.getBoundingClientRect()
+    if (bounds.width <= 0 || bounds.height <= 0) return
+    raycastPointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1
+    raycastPointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1
+    raycaster.setFromCamera(raycastPointer, camera)
+    const hit = raycaster.intersectObjects(group.children, true).some(({ object }) => object.visible)
     const projected = group.position.clone().project(camera)
     const x = bounds.left + (projected.x + 1) * .5 * bounds.width
     const y = bounds.top + (1 - projected.y) * .5 * bounds.height
     const radius = Math.max(54, Math.min(bounds.width, bounds.height) * .1)
-    if (Math.hypot(event.clientX - x, event.clientY - y) > radius) return
-    event.preventDefault()
-    event.stopPropagation()
+    if (!hit && Math.hypot(event.clientX - x, event.clientY - y) > radius) return
     trigger()
   }, true)
 
